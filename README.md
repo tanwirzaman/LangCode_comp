@@ -25,9 +25,43 @@ The official [Data page](https://langcode2027.github.io/task2/data/) lists these
 
 Each CSV is UTF-8 and has one prompt per row. The columns are `id` (example: `T2-483920`) and `prompt`; train and dev also include `label`, which is `S` or `U`. Train and dev are balanced by label and by code-mixed versus transliterated form. The language and form are not identified per row.
 
-The organizers state that any public data, models, and tools may be used. However, dev-test and test prompts must be labeled one prompt at a time: do not look them up in other datasets, including sources used to build MALICE. The data page also gives a research-use condition: use the data only to research detection and defense, do not use it to build or improve attacks, do not run unsafe prompts against production systems, and do not redistribute it. **This repository does not download or include the dataset.** Read and accept the official terms yourself before downloading it.
+The organizers state that any public data, models, and tools may be used. However, dev-test and test prompts must be labeled one prompt at a time: do not look them up in other datasets, including sources used to build MALICE. The data page also gives a research-use condition: use the data only to research detection and defense, do not use it to build or improve attacks, do not run unsafe prompts against production systems, and do not redistribute it. **The downloaded files are local under `data/raw/`, ignored by Git, and must not be committed or redistributed.**
 
 The benchmark is built from seed prompts in MALICE. If the data is used in research, include the citation on the official data page (Raihan et al., Findings of EMNLP 2026).
+
+### Downloaded starter kit and integrity check
+
+The following released files are present locally in `data/raw/` and excluded from version control:
+
+| File | Purpose |
+|---|---|
+| `train.csv` | 20,000 labeled prompts |
+| `dev.csv` | 10,000 labeled prompts |
+| `devtest.csv` | 10,000 unlabeled development-submission prompts |
+| `scorer.zip` and `scorer/score.py` | Official scorer and format checker |
+| `LangCode2027_Task2_starter.ipynb` | Colab BERT-base baseline notebook |
+
+The downloaded CSVs were read as UTF-8. `train.csv` has columns `id,prompt,label`, 20,000 unique IDs, no empty IDs/prompts/labels, and 10,000 examples per label. `dev.csv` has the same columns, 10,000 unique IDs, no empty IDs/prompts/labels, and 5,000 examples per label. `devtest.csv` has columns `id,prompt`, 10,000 unique IDs, and no empty IDs/prompts. None of the three files contains duplicate IDs or labels outside `S` and `U`.
+
+### Submission and scorer format
+
+`submission.csv` must contain the columns `id` and `label`. A submission can be a CSV, a folder, or a ZIP. A folder or ZIP must contain exactly one file named `submission.csv`. Labels are `S` or `U` (case-insensitive); duplicate or empty IDs are rejected. Extra columns are ignored. Missing predictions count as wrong; unknown IDs are ignored by the scorer.
+
+Run these commands from the repository root:
+
+```bash
+# Check format and exact coverage for a dev-test submission archive
+python data/raw/scorer/score.py --check submission.zip data/raw/devtest.csv
+
+# Score a local CSV against labeled development data
+python data/raw/scorer/score.py --score submission.csv data/raw/dev.csv
+```
+
+For CodaBench, the scorer reads `/app/input/ref/reference.csv` and `/app/input/res/`, then writes `scores.json` under `/app/output/`.
+
+### Starter notebook environment and baseline
+
+The notebook targets Python 3 in Google Colab and recommends a T4 GPU. It installs `transformers>=4.48,<5`, `accelerate`, and `datasets`; Colab supplies PyTorch, NumPy, and pandas. The baseline loads `google-bert/bert-base-uncased`, truncates to 256 tokens, trains for two epochs with batch size 32 and learning rate `2e-5`, evaluates on dev each epoch, and uses seed 42. The notebook estimates about 15 minutes on a free T4. It writes `submission.csv` and `submission.zip`, then checks the dev-test archive with the official scorer.
 
 ## Scoring objective
 
@@ -39,7 +73,7 @@ Safety Score = max(0, R_U + R_S - 100)
 
 `R_U` is unsafe recall: the percentage of unsafe examples predicted `U`. `R_S` is safe recall: the percentage of safe examples predicted `S`. A missed attack and a false alarm each reduce one of these recalls. An unlabeled prompt counts as wrong. The official leaderboard ranks teams by Safety Score; it also displays both recalls. A system that predicts only one class scores zero. Therefore model selection must consider both classes rather than optimize unsafe recall alone.
 
-Use the released scorer for local metric and file-format checks once it has been obtained from the official page. Do not substitute ordinary accuracy for the competition metric.
+Use the released scorer for local metric and file-format checks. Do not substitute ordinary accuracy for the competition metric.
 
 ## Competition workflow and dates
 
@@ -57,9 +91,9 @@ Competition participation is through CodaBench. The leaderboard page says all su
 
 These are the concrete prerequisites for writing reliable training and submission code:
 
-1. **Obtain the official starter kit under the research-use terms.** Download train, dev, dev-test, scorer, and the starter notebook from the [Data page](https://langcode2027.github.io/task2/data/). The dataset itself is intentionally absent from this workspace.
-2. **Confirm the submission contract.** The data page says the exact upload format is on the CodaBench Submission page. Confirm the required filename/archive structure, column names/order, row ordering/IDs, and any metadata. The CodaBench link returned unrelated page content during this inspection, so the schema could not be independently verified here. The official scorer should be treated as the executable authority for format validation.
-3. **Inspect the released files and scorer.** Verify CSV headers, encodings, nulls, duplicate IDs, allowed labels, scorer invocation, and submission constraints before building the data loader or exporter.
+1. **Obtain the official starter kit under the research-use terms.** Complete. The currently released train, dev, dev-test, scorer, and starter notebook are stored locally under `data/raw/`; those files are Git-ignored.
+2. **Confirm the submission contract.** Complete. The scorer's format contract and invocation are recorded above.
+3. **Inspect the released files and scorer.** Complete for the released CSVs and scorer: headers, UTF-8 decoding, row counts, IDs, empty values, labels, and scorer commands are recorded above.
 4. **Choose an initial model and runtime.** The official starter notebook fine-tunes BERT-base on a free T4 GPU and describes an approximately 15-minute run. Decide whether to reproduce this baseline first, what local/Colab hardware is available, and whether any additional multilingual model or external public data is appropriate. Model and dependency versions should be selected when implementation begins.
 5. **Set validation protocol.** Use train for fitting and dev for model selection. Keep dev-test/test out of fitting and tuning; dev-test is for submission practice and test is for final evaluation only. Track Safety Score, unsafe recall, and safe recall.
 6. **Plan a reproducible experiment and final export.** Record seeds, model/configuration, preprocessing, thresholds, and environment. Implement a submission writer only after confirming the schema, then run the official scorer's format check before any CodaBench upload.
@@ -91,7 +125,7 @@ The directories are prepared for the next implementation step. No detector, data
 
 ## Local setup status
 
-The repository contains task documentation and empty project directories, plus the explainer deck. It has no detector code, dataset, or model checkpoint. Python packaging and dependency pins are deliberately deferred until the official files and chosen baseline are inspected. Once implementation starts, use a project-local virtual environment and record exact dependencies so the baseline can be reproduced. A GPU is optional for data inspection and lightweight experiments; reproducing the BERT-base starter run is expected to benefit from a GPU such as the T4 mentioned by the organizers.
+The tracked repository contains task documentation, project directories, and the explainer deck. The downloaded starter-kit data remains local and ignored by Git. There is no detector code or model checkpoint yet. Python packaging and dependency pins are deliberately deferred until the baseline is implemented. A GPU is optional for data inspection and lightweight experiments; reproducing the BERT-base starter run is expected to benefit from a T4 GPU.
 
 ## Planned implementation sequence
 
