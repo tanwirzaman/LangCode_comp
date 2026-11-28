@@ -174,6 +174,10 @@ To prepare the final submission after the organizers release `test.csv` (schedul
 
 The test output is written under `outputs/submissions/test/`. Both `outputs/` and `models/` are Git-ignored, so generated predictions, archives, and model weights stay local. The first completed dev-test run produced 10,000 rows (4,908 `S`, 5,092 `U`); the official scorer reported 0 missing IDs, 0 unknown IDs, and “The file is ready to upload.” A second run produced the same CSV SHA-256, `6162ab2ad52948bdcbbc7a3cd498bd5d4980c241d279185d688f3611bdaad56d`.
 
+## Competition submission tracking
+
+The current dev-test archive is locally validated; the CodaBench practice score is still pending until the archive is uploaded and a completed result is returned. The final 30,000-row test file is scheduled for Jan 8, 2027, and labels are due Jan 24 at 11:59 PM AoE. See [reports/submission-readiness.md](reports/submission-readiness.md) for the practice artifact hash, exact finalization steps, restrictions, and a score/result ledger. Recheck the [official schedule](https://langcode2027.github.io/task2/) before the test phase because dates may change.
+
 ## Project layout
 
 ```text
@@ -210,7 +214,7 @@ This order is saved to make the dependencies visible:
 3. **[x #6 Evaluate multilingual robustness and tune for Safety Score](https://github.com/tanwirzaman/LangCode_comp/issues/6)** — complete; variants, thresholds, seed runs, script slices, and selected candidate are documented.
 4. **[x #1 Confirm the official CodaBench submission schema](https://github.com/tanwirzaman/LangCode_comp/issues/1)** — complete; the official starter archive, CSV fields, coverage check, and ID semantics are documented above.
 5. **[x #7 Build deterministic inference and validated submission packaging](https://github.com/tanwirzaman/LangCode_comp/issues/7)** — complete; the local-only inference script preserves IDs/order, writes the official ZIP shape, and gates output on the official scorer check.
-6. **[#4 Practice on dev-test and prepare the final test submission](https://github.com/tanwirzaman/LangCode_comp/issues/4)** — follow the competition release dates; test data is scheduled for Jan 8, 2027.
+6. **[#4 Practice on dev-test and prepare the final test submission](https://github.com/tanwirzaman/LangCode_comp/issues/4)** — in progress; local dev-test package is validated, CodaBench score and final test phase remain pending. Progress is tracked in [reports/submission-readiness.md](reports/submission-readiness.md).
 7. **[#5 Prepare the Shared Task 2 system description paper](https://github.com/tanwirzaman/LangCode_comp/issues/5)** — after test-phase participation and results.
 
 ## Official references
