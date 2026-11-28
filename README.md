@@ -154,6 +154,8 @@ These are the concrete prerequisites for writing reliable training and submissio
 
 The repository includes an eight-slide, plain-language visual guide: [presentations/langcode-task2-explainer.pptx](presentations/langcode-task2-explainer.pptx). It explains the classification decision, language and script variation, safe versus unsafe intent, dataset splits, the Safety Score, and competition dates.
 
+A six-page PDF explains the task, compares the tried classifiers, details the selected XLM-R inference algorithm, and walks through a fully synthetic prompt-to-submission example: [output/pdf/langcode-task2-problem-and-approach.pdf](output/pdf/langcode-task2-problem-and-approach.pdf).
+
 ## Deterministic inference and submission packaging
 
 The selected candidate is `configs/candidate-xlm-roberta.yaml`: a locally fine-tuned XLM-R base checkpoint at `models/xlm-roberta-base-256-seed43`, seed 43, 256-token truncation, and an unsafe-probability threshold of 0.52. The inference script loads the saved checkpoint and tokenizer from disk, reads only label-free `devtest` or `test` records through the split-safe loader, and predicts in input order. It does not download a model or access labels during submission generation.
