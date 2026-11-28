@@ -1,0 +1,38 @@
+# Dev-selected candidate for the next inference/packaging step.
+# Selection and per-script analysis: reports/robustness-experiments.md
+name: xlm-roberta-base-seed43
+task: langcode-2027-shared-task-2
+
+model:
+  id: FacebookAI/xlm-roberta-base
+  revision: e73636d4f797dec63c3081bb6ed5c7b0bb3f2089
+  local_checkpoint: models/xlm-roberta-base-256-seed43
+  max_length: 256
+  input_field: prompt
+
+classification:
+  label_to_id:
+    S: 0
+    U: 1
+  prediction_rule: predict U when p_unsafe >= threshold
+  threshold: 0.52
+
+training:
+  seed: 43
+  epochs: 2
+  learning_rate: 0.00002
+  warmup_ratio: 0.06
+  weight_decay: 0.01
+  effective_train_batch_size: 32
+  per_device_train_batch_size: 16
+  gradient_accumulation_steps: 2
+  per_device_eval_batch_size: 128
+  fp16: true
+
+selection:
+  split: dev
+  metric: safety_score
+  safety_score: 75.10
+  unsafe_recall: 89.50
+  safe_recall: 85.60
+  threshold_sweep: 0.20_to_0.80_step_0.01

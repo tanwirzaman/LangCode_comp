@@ -16,6 +16,7 @@ import re
 import subprocess
 import sys
 import time
+from functools import partial
 from pathlib import Path
 
 import numpy as np
@@ -41,6 +42,11 @@ EVAL_BATCH_SIZE = 128
 LEARNING_RATE = 2e-5
 WARMUP_RATIO = 0.06
 SEED = 42
+MODEL_REVISIONS = {
+    "google-bert/bert-base-uncased": "86b5e0934494bd15c9632b12f734a8a67f723594",
+    "google-bert/bert-base-multilingual-cased": "3f076fdb1ab68d5b2880cb87a0886f315b8146f8",
+    "FacebookAI/xlm-roberta-base": "e73636d4f797dec63c3081bb6ed5c7b0bb3f2089",
+}
 
 
 def parse_args() -> argparse.Namespace:
@@ -54,26 +60,48 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--model-dir",
         type=Path,
-        default=REPOSITORY_ROOT / "models" / "bert-base-baseline",
         help="local directory for the trained model and tokenizer",
     )
     parser.add_argument(
         "--report",
         type=Path,
-        default=REPOSITORY_ROOT / "outputs" / "bert-base-baseline" / "run.json",
         help="where to write machine-readable run settings and metrics",
     )
-    return parser.parse_args()
+    parser.add_argument("--run-name", default="bert-base-baseline", help="name for local model/output folders")
+    parser.add_argument("--model-id", default=MODEL_ID, help="Hugging Face model id or local checkpoint")
+    parser.add_argument("--model-revision", help="optional pinned Hugging Face revision")
+    parser.add_argument("--max-length", type=int, default=MAX_LENGTH)
+    parser.add_argument("--epochs", type=float, default=EPOCHS)
+    parser.add_argument("--train-batch-size", type=int, default=TRAIN_BATCH_SIZE)
+    parser.add_argument("--eval-batch-size", type=int, default=EVAL_BATCH_SIZE)
+    parser.add_argument("--gradient-accumulation-steps", type=int, default=1)
+    parser.add_argument("--learning-rate", type=float, default=LEARNING_RATE)
+    parser.add_argument("--warmup-ratio", type=float, default=WARMUP_RATIO)
+    parser.add_argument("--weight-decay", type=float, default=0.01)
+    parser.add_argument("--threshold", type=float, default=0.5)
+    parser.add_argument("--seed", type=int, default=SEED)
+    args = parser.parse_args()
+    if args.model_revision is None:
+        args.model_revision = MODEL_REVISIONS.get(args.model_id)
+    args.model_dir = args.model_dir or REPOSITORY_ROOT / "models" / args.run_name
+    args.report = args.report or REPOSITORY_ROOT / "outputs" / args.run_name / "run.json"
+    if args.max_length <= 0 or args.epochs <= 0:
+        parser.error("--max-length and --epochs must be positive")
+    if not 0.0 <= args.threshold <= 1.0:
+        parser.error("--threshold must be between 0 and 1")
+    if args.gradient_accumulation_steps < 1:
+        parser.error("--gradient-accumulation-steps must be at least 1")
+    return args
 
 
-def as_dataset(frame: pd.DataFrame, tokenizer, with_labels: bool) -> Dataset:
+def as_dataset(frame: pd.DataFrame, tokenizer, with_labels: bool, max_length: int) -> Dataset:
     values: dict[str, list] = {"text": frame["prompt"].tolist()}
     if with_labels:
         values["labels"] = (frame["label"].to_numpy() == "U").astype(int).tolist()
     dataset = Dataset.from_dict(values)
     return dataset.map(
         lambda batch: tokenizer(
-            batch["text"], truncation=True, max_length=MAX_LENGTH
+            batch["text"], truncation=True, max_length=max_length
         ),
         batched=True,
         remove_columns=["text"],
@@ -86,8 +114,8 @@ def unsafe_probabilities(logits: np.ndarray) -> np.ndarray:
     return torch.softmax(torch.tensor(logits, dtype=torch.float32), dim=-1)[:, 1].numpy()
 
 
-def compute_dev_metrics(evaluation) -> dict[str, float]:
-    predictions = np.where(unsafe_probabilities(evaluation.predictions) >= 0.5, "U", "S")
+def compute_dev_metrics(evaluation, threshold: float = 0.5) -> dict[str, float]:
+    predictions = np.where(unsafe_probabilities(evaluation.predictions) >= threshold, "U", "S")
     gold = np.where(evaluation.label_ids == 1, "U", "S")
     unsafe_recall = 100.0 * np.mean(predictions[gold == "U"] == "U")
     safe_recall = 100.0 * np.mean(predictions[gold == "S"] == "S")
@@ -142,36 +170,39 @@ def main() -> int:
     print(f"Device: {device_name}", flush=True)
     print(f"Train rows: {len(train):,}; dev rows: {len(dev):,}", flush=True)
 
-    tokenizer = AutoTokenizer.from_pretrained(MODEL_ID)
-    train_dataset = as_dataset(train, tokenizer, with_labels=True)
-    dev_dataset = as_dataset(dev, tokenizer, with_labels=True)
+    load_kwargs = {"revision": args.model_revision} if args.model_revision else {}
+    tokenizer = AutoTokenizer.from_pretrained(args.model_id, **load_kwargs)
+    train_dataset = as_dataset(train, tokenizer, with_labels=True, max_length=args.max_length)
+    dev_dataset = as_dataset(dev, tokenizer, with_labels=True, max_length=args.max_length)
     # The starter notebook only passes seed through TrainingArguments, which
     # seeds the training loop after the classification head is initialized.
     # Seed here too so the randomly initialized head is repeatable.
-    set_seed(SEED)
+    set_seed(args.seed)
     model = AutoModelForSequenceClassification.from_pretrained(
-        MODEL_ID,
+        args.model_id,
+        **load_kwargs,
         num_labels=2,
         id2label={0: "S", 1: "U"},
         label2id={"S": 0, "U": 1},
     )
     parameter_count = sum(parameter.numel() for parameter in model.parameters())
-    print(f"Model: {MODEL_ID} ({parameter_count / 1e6:.0f}M parameters)", flush=True)
+    print(f"Model: {args.model_id} ({parameter_count / 1e6:.0f}M parameters)", flush=True)
 
     training_args = TrainingArguments(
         output_dir=str(args.model_dir / "trainer"),
-        num_train_epochs=EPOCHS,
-        learning_rate=LEARNING_RATE,
-        warmup_ratio=WARMUP_RATIO,
-        weight_decay=0.01,
-        per_device_train_batch_size=TRAIN_BATCH_SIZE,
-        per_device_eval_batch_size=EVAL_BATCH_SIZE,
+        num_train_epochs=args.epochs,
+        learning_rate=args.learning_rate,
+        warmup_ratio=args.warmup_ratio,
+        weight_decay=args.weight_decay,
+        per_device_train_batch_size=args.train_batch_size,
+        per_device_eval_batch_size=args.eval_batch_size,
+        gradient_accumulation_steps=args.gradient_accumulation_steps,
         fp16=torch.cuda.is_available(),
         eval_strategy="epoch",
         save_strategy="no",
         logging_steps=100,
         report_to="none",
-        seed=SEED,
+        seed=args.seed,
     )
     trainer = Trainer(
         model=model,
@@ -179,7 +210,7 @@ def main() -> int:
         train_dataset=train_dataset,
         eval_dataset=dev_dataset,
         data_collator=DataCollatorWithPadding(tokenizer),
-        compute_metrics=compute_dev_metrics,
+        compute_metrics=partial(compute_dev_metrics, threshold=args.threshold),
     )
 
     started = time.perf_counter()
@@ -197,10 +228,13 @@ def main() -> int:
     ]
 
     probabilities = unsafe_probabilities(trainer.predict(dev_dataset).predictions)
-    final_labels = np.where(probabilities >= 0.5, "U", "S")
+    final_labels = np.where(probabilities >= args.threshold, "U", "S")
     scorer_output, official_metrics = official_dev_score(
         dev["id"], final_labels, dev_csv, scorer, args.report.parent
     )
+    pd.DataFrame(
+        {"id": dev["id"], "label": dev["label"], "p_unsafe": probabilities}
+    ).to_csv(args.report.parent / "dev_probabilities.csv", index=False)
     trainer.save_model(str(args.model_dir))
     tokenizer.save_pretrained(args.model_dir)
 
@@ -209,20 +243,23 @@ def main() -> int:
         for name in ("torch", "transformers", "datasets", "accelerate", "numpy", "pandas")
     }
     report = {
-        "model_id": MODEL_ID,
+        "model_id": args.model_id,
+        "model_revision": args.model_revision or getattr(model.config, "_commit_hash", None),
         "model_parameters": parameter_count,
         "train_rows": len(train),
         "dev_rows": len(dev),
         "settings": {
-            "max_length": MAX_LENGTH,
-            "epochs": EPOCHS,
-            "train_batch_size": TRAIN_BATCH_SIZE,
-            "eval_batch_size": EVAL_BATCH_SIZE,
-            "learning_rate": LEARNING_RATE,
-            "warmup_ratio": WARMUP_RATIO,
-            "weight_decay": 0.01,
-            "threshold": 0.5,
-            "seed": SEED,
+            "max_length": args.max_length,
+            "epochs": args.epochs,
+            "train_batch_size": args.train_batch_size,
+            "eval_batch_size": args.eval_batch_size,
+            "gradient_accumulation_steps": args.gradient_accumulation_steps,
+            "effective_train_batch_size": args.train_batch_size * args.gradient_accumulation_steps,
+            "learning_rate": args.learning_rate,
+            "warmup_ratio": args.warmup_ratio,
+            "weight_decay": args.weight_decay,
+            "threshold": args.threshold,
+            "seed": args.seed,
             "fp16": torch.cuda.is_available(),
         },
         "environment": {

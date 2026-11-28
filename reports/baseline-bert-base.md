@@ -17,11 +17,14 @@ Official scorer output:
 Safety Score 53.56 | R_U (unsafe recall) 86.58 | R_S (safe recall) 66.98 | missing 0, unknown ids 0
 ```
 
+This is the issue #2 reference run. A later same-settings run for issue #6 scored 51.18 (R_U 85.28, R_S 65.90); both used seed 42. The observed 2.38-point spread shows that this CUDA training path is not bit-for-bit deterministic. The [robustness report](robustness-experiments.md) records the rerun alongside the other variants; treat small score differences as provisional.
+
 ## Configuration
 
 | Setting | Value |
 | --- | --- |
 | Model | `google-bert/bert-base-uncased` (109,483,778 parameters) |
+| Model revision | `86b5e0934494bd15c9632b12f734a8a67f723594` |
 | Inputs | `prompt` column only; no additional text normalization |
 | Truncation | 256 tokens |
 | Train/dev rows | 20,000 / 10,000 |

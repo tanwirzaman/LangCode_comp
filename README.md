@@ -65,6 +65,8 @@ The notebook targets Python 3 in Google Colab and recommends a T4 GPU. It instal
 
 The repository reproduction uses pinned dependencies in `requirements-baseline.txt` and `scripts/train_baseline.py`. Its dev results, run settings, and local rerun instructions are documented in [reports/baseline-bert-base.md](reports/baseline-bert-base.md). On the RTX 5070 Ti used for that run, training took about 2.33 minutes.
 
+Issue #6 compared multilingual models, context lengths, thresholds, and two seeds for the leading multilingual models. The current dev-selected candidate is XLM-R base, seed 43, with a 256-token input and `p(U) >= 0.52`; it scored 75.10 Safety Score (R_U 89.50, R_S 85.60) on dev. See [the robustness report](reports/robustness-experiments.md) and [candidate config](configs/candidate-xlm-roberta.yaml). The score is dev-selected and should not be read as final test performance.
+
 On Windows with `uv`, create the environment and run the baseline from the repository root:
 
 ```powershell
@@ -164,7 +166,7 @@ This order is saved to make the dependencies visible:
 
 1. **[x #3 Add dataset integrity checks and split-safe loading](https://github.com/tanwirzaman/LangCode_comp/issues/3)** — complete; provides safe data APIs and a validation command.
 2. **[x #2 Reproduce the official BERT-base starter baseline](https://github.com/tanwirzaman/LangCode_comp/issues/2)** — complete; dev metrics are recorded in the baseline report.
-3. **[#6 Evaluate multilingual robustness and tune for Safety Score](https://github.com/tanwirzaman/LangCode_comp/issues/6)** — compare improvements using train/dev only.
+3. **[x #6 Evaluate multilingual robustness and tune for Safety Score](https://github.com/tanwirzaman/LangCode_comp/issues/6)** — complete; variants, thresholds, seed runs, script slices, and selected candidate are documented.
 4. **[#1 Confirm the official CodaBench submission schema](https://github.com/tanwirzaman/LangCode_comp/issues/1)** — finish any CodaBench-specific upload details before packaging.
 5. **[#7 Build deterministic inference and validated submission packaging](https://github.com/tanwirzaman/LangCode_comp/issues/7)** — depends on the selected model and confirmed submission contract.
 6. **[#4 Practice on dev-test and prepare the final test submission](https://github.com/tanwirzaman/LangCode_comp/issues/4)** — follow the competition release dates; test data is scheduled for Jan 8, 2027.
