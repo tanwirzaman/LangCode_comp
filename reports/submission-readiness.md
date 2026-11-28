@@ -31,4 +31,3 @@ Follow the official data restriction: label the held-out prompts with the system
 |---|---|---|---|---:|---:|---:|---|
 | Dev-test | Pending upload | XLM-R base seed 43, threshold 0.52 | `6162ab2ad52948bdcbbc7a3cd498bd5d4980c241d279185d688f3611bdaad56d` (CSV) | Pending | Pending | Pending | Local check passed; CodaBench score not yet recorded |
 | Test | Pending release | Pending | Pending | Pending | Pending | Pending | Pending |
-
