@@ -154,6 +154,26 @@ These are the concrete prerequisites for writing reliable training and submissio
 
 The repository includes an eight-slide, plain-language visual guide: [presentations/langcode-task2-explainer.pptx](presentations/langcode-task2-explainer.pptx). It explains the classification decision, language and script variation, safe versus unsafe intent, dataset splits, the Safety Score, and competition dates.
 
+## Deterministic inference and submission packaging
+
+The selected candidate is `configs/candidate-xlm-roberta.yaml`: a locally fine-tuned XLM-R base checkpoint at `models/xlm-roberta-base-256-seed43`, seed 43, 256-token truncation, and an unsafe-probability threshold of 0.52. The inference script loads the saved checkpoint and tokenizer from disk, reads only label-free `devtest` or `test` records through the split-safe loader, and predicts in input order. It does not download a model or access labels during submission generation.
+
+Generate and validate the current dev-test practice submission from the repository root:
+
+```powershell
+.venv\Scripts\python.exe scripts\create_submission.py --split devtest
+```
+
+The command writes `outputs/submissions/devtest/submission.csv` and `outputs/submissions/devtest/submission.zip`. The ZIP contains exactly one root-level `submission.csv` with `id,label` columns and one `S` or `U` prediction for each input ID, in the source CSV's row order. Before publishing the ZIP at its final path, the script calls the official `data/raw/scorer/score.py --check` and requires zero missing and unknown IDs. It prints the split, prediction counts, device/configuration, and CSV SHA-256 without printing prompt text. Seeds, evaluation mode, deterministic PyTorch algorithms, eager attention, and stable ZIP metadata are used for repeatable inference and packaging.
+
+To prepare the final submission after the organizers release `test.csv` (scheduled for Jan 8, 2027), run:
+
+```powershell
+.venv\Scripts\python.exe scripts\create_submission.py --split test
+```
+
+The test output is written under `outputs/submissions/test/`. Both `outputs/` and `models/` are Git-ignored, so generated predictions, archives, and model weights stay local. The first completed dev-test run produced 10,000 rows (4,908 `S`, 5,092 `U`); the official scorer reported 0 missing IDs, 0 unknown IDs, and “The file is ready to upload.” A second run produced the same CSV SHA-256, `6162ab2ad52948bdcbbc7a3cd498bd5d4980c241d279185d688f3611bdaad56d`.
+
 ## Project layout
 
 ```text
@@ -189,7 +209,7 @@ This order is saved to make the dependencies visible:
 2. **[x #2 Reproduce the official BERT-base starter baseline](https://github.com/tanwirzaman/LangCode_comp/issues/2)** — complete; dev metrics are recorded in the baseline report.
 3. **[x #6 Evaluate multilingual robustness and tune for Safety Score](https://github.com/tanwirzaman/LangCode_comp/issues/6)** — complete; variants, thresholds, seed runs, script slices, and selected candidate are documented.
 4. **[x #1 Confirm the official CodaBench submission schema](https://github.com/tanwirzaman/LangCode_comp/issues/1)** — complete; the official starter archive, CSV fields, coverage check, and ID semantics are documented above.
-5. **[#7 Build deterministic inference and validated submission packaging](https://github.com/tanwirzaman/LangCode_comp/issues/7)** — depends on the selected model and confirmed submission contract.
+5. **[x #7 Build deterministic inference and validated submission packaging](https://github.com/tanwirzaman/LangCode_comp/issues/7)** — complete; the local-only inference script preserves IDs/order, writes the official ZIP shape, and gates output on the official scorer check.
 6. **[#4 Practice on dev-test and prepare the final test submission](https://github.com/tanwirzaman/LangCode_comp/issues/4)** — follow the competition release dates; test data is scheduled for Jan 8, 2027.
 7. **[#5 Prepare the Shared Task 2 system description paper](https://github.com/tanwirzaman/LangCode_comp/issues/5)** — after test-phase participation and results.
 
