@@ -9,7 +9,7 @@ This file tracks the development practice submission and final-test handoff for 
 - **Model selection boundary:** fitting and threshold selection used train/dev only. The experiment report states that no dev-test/test rows were loaded for tuning. Dev-test is used here only for the competition's practice submission.
 - **Practice artifact:** `outputs/submissions/devtest/submission.zip` (local and Git-ignored); CSV SHA-256 `6162ab2ad52948bdcbbc7a3cd498bd5d4980c241d279185d688f3611bdaad56d`.
 - **Local official format/coverage check:** 10,000 predictions; 0 missing IDs; 0 unknown IDs; scorer said “The file is ready to upload.” Two local inference runs produced byte-identical CSV files and the source row order was verified.
-- **CodaBench practice result:** pending. Do not record a leaderboard score until the development archive has actually been submitted through the team's CodaBench account.
+- **CodaBench practice result:** Safety Score **76.88**, reported by the user after submission. The dev-test archive has been submitted. CodaBench's unsafe and safe recall values, plus the exact submission date/time, have not yet been provided.
 
 ## Final test phase handoff
 
@@ -29,5 +29,5 @@ Follow the official data restriction: label the held-out prompts with the system
 
 | Phase | Submission date/time (AoE) | Model/config version | Artifact SHA-256 | Safety Score | Unsafe recall | Safe recall | CodaBench status/result |
 |---|---|---|---|---:|---:|---:|---|
-| Dev-test | Pending upload | XLM-R base seed 43, threshold 0.52 | `6162ab2ad52948bdcbbc7a3cd498bd5d4980c241d279185d688f3611bdaad56d` (CSV) | Pending | Pending | Pending | Local check passed; CodaBench score not yet recorded |
+| Dev-test | Not provided | XLM-R base seed 43, threshold 0.52 | `6162ab2ad52948bdcbbc7a3cd498bd5d4980c241d279185d688f3611bdaad56d` (CSV) | 76.88 | Pending | Pending | Submitted; score reported by user; recall values not provided |
 | Test | Pending release | Pending | Pending | Pending | Pending | Pending | Pending |

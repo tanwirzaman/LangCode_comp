@@ -176,7 +176,7 @@ The test output is written under `outputs/submissions/test/`. Both `outputs/` an
 
 ## Competition submission tracking
 
-The current dev-test archive is locally validated; the CodaBench practice score is still pending until the archive is uploaded and a completed result is returned. The final 30,000-row test file is scheduled for Jan 8, 2027, and labels are due Jan 24 at 11:59 PM AoE. See [reports/submission-readiness.md](reports/submission-readiness.md) for the practice artifact hash, exact finalization steps, restrictions, and a score/result ledger. Recheck the [official schedule](https://langcode2027.github.io/task2/) before the test phase because dates may change.
+The dev-test archive passed local validation and was submitted to CodaBench; the reported Safety Score is **76.88**. Recall values have not yet been recorded. The final 30,000-row test file is scheduled for Jan 8, 2027, and labels are due Jan 24 at 11:59 PM AoE. See [reports/submission-readiness.md](reports/submission-readiness.md) for the practice artifact hash, exact finalization steps, restrictions, and a score/result ledger. Recheck the [official schedule](https://langcode2027.github.io/task2/) before the test phase because dates may change.
 
 ## Project layout
 
