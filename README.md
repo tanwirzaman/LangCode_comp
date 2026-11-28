@@ -63,6 +63,17 @@ For CodaBench, the scorer reads `/app/input/ref/reference.csv` and `/app/input/r
 
 The notebook targets Python 3 in Google Colab and recommends a T4 GPU. It installs `transformers>=4.48,<5`, `accelerate`, and `datasets`; Colab supplies PyTorch, NumPy, and pandas. The baseline loads `google-bert/bert-base-uncased`, truncates to 256 tokens, trains for two epochs with batch size 32 and learning rate `2e-5`, evaluates on dev each epoch, and uses seed 42. The notebook estimates about 15 minutes on a free T4. It writes `submission.csv` and `submission.zip`, then checks the dev-test archive with the official scorer.
 
+The repository reproduction uses pinned dependencies in `requirements-baseline.txt` and `scripts/train_baseline.py`. Its dev results, run settings, and local rerun instructions are documented in [reports/baseline-bert-base.md](reports/baseline-bert-base.md). On the RTX 5070 Ti used for that run, training took about 2.33 minutes.
+
+On Windows with `uv`, create the environment and run the baseline from the repository root:
+
+```powershell
+uv venv --python 3.12 .venv
+uv pip install --python .venv\Scripts\python.exe -r requirements-baseline.txt
+.venv\Scripts\python.exe scripts\validate_data.py
+.venv\Scripts\python.exe scripts\train_baseline.py
+```
+
 Run the repository's split-aware integrity check from the repository root:
 
 ```bash
@@ -112,7 +123,7 @@ These are the concrete prerequisites for writing reliable training and submissio
 1. **Obtain the official starter kit under the research-use terms.** Complete. The currently released train, dev, dev-test, scorer, and starter notebook are stored locally under `data/raw/`; those files are Git-ignored.
 2. **Confirm the submission contract.** Complete. The scorer's format contract and invocation are recorded above.
 3. **Inspect the released files and scorer.** Complete for the released CSVs and scorer: headers, UTF-8 decoding, row counts, IDs, empty values, labels, and scorer commands are recorded above.
-4. **Choose an initial model and runtime.** The official starter notebook fine-tunes BERT-base on a free T4 GPU and describes an approximately 15-minute run. Decide whether to reproduce this baseline first, what local/Colab hardware is available, and whether any additional multilingual model or external public data is appropriate. Model and dependency versions should be selected when implementation begins.
+4. **Choose an initial model and runtime.** Complete: the official BERT-base starter has been reproduced locally using a GeForce RTX 5070 Ti. Its exact model settings, dependency versions, runtime, and dev metrics are in [the baseline report](reports/baseline-bert-base.md). The baseline is a starting point; multilingual models and additional public data can be considered in follow-up experiments.
 5. **Set validation protocol.** Use train for fitting and dev for model selection. Keep dev-test/test out of fitting and tuning; dev-test is for submission practice and test is for final evaluation only. Track Safety Score, unsafe recall, and safe recall.
 6. **Plan a reproducible experiment and final export.** Record seeds, model/configuration, preprocessing, thresholds, and environment. Implement a submission writer only after confirming the schema, then run the official scorer's format check before any CodaBench upload.
 
@@ -126,31 +137,33 @@ The repository includes an eight-slide, plain-language visual guide: [presentati
 LangCode_comp/
 ├── README.md                 # Task, rules, setup prerequisites, and workflow
 ├── .gitignore                # Excludes local data, models, environments, and outputs
+├── requirements-baseline.txt # Pinned dependencies for the BERT-base reproduction
 ├── presentations/            # Visual task explainer deck
+├── reports/                  # Tracked experiment and baseline reports
 ├── data/
 │   ├── raw/                  # Official files kept locally; never commit
 │   └── processed/            # Derived local data; never commit
 ├── configs/                  # Experiment and model configurations
 ├── notebooks/                # Exploration and reproducible experiments
-├── src/langcode_task2/       # Reusable training, evaluation, and inference code
-├── scripts/                  # Command-line entry points
+├── src/langcode_task2/       # Split-aware dataset loading and validation
+├── scripts/                  # Data validation and baseline training commands
 ├── models/                   # Local checkpoints; never commit
 ├── outputs/                  # Logs, metrics, and predictions; never commit
 └── submissions/              # Locally generated CodaBench archives; never commit
 ```
 
-Data checking and split-aware loaders are implemented. The starter kit remains local and Git-ignored. No detector, trained checkpoint, or submission writer has been added yet.
+Data checking, split-aware loaders, and the official BERT-base baseline are implemented. The starter kit and trained checkpoint remain local and Git-ignored. The baseline checkpoint is saved under `models/bert-base-baseline/`; run details and dev predictions are saved under `outputs/bert-base-baseline/`.
 
 ## Local setup status
 
-The tracked repository contains task documentation, project directories, and the explainer deck. The downloaded starter-kit data remains local and ignored by Git. There is no detector code or model checkpoint yet. Python packaging and dependency pins are deliberately deferred until the baseline is implemented. A GPU is optional for data inspection and lightweight experiments; reproducing the BERT-base starter run is expected to benefit from a T4 GPU.
+The tracked repository contains task documentation, split-safe data utilities, the baseline training script, pinned baseline dependencies, the baseline report, and the explainer deck. The downloaded starter-kit data, trained checkpoint, dev predictions, and machine-readable run output remain local and ignored by Git. The baseline has been run on a GeForce RTX 5070 Ti with CUDA 13.2; a CUDA-capable GPU is recommended for practical training speed.
 
 ## Recommended GitHub issue sequence
 
 This order is saved to make the dependencies visible:
 
-1. **[#3 Add dataset integrity checks and split-safe loading](https://github.com/tanwirzaman/LangCode_comp/issues/3)** — current work; provides safe data APIs and a validation command.
-2. **[#2 Reproduce the official BERT-base starter baseline](https://github.com/tanwirzaman/LangCode_comp/issues/2)** — depends on #3; establishes dev Safety Score and recalls.
+1. **[x #3 Add dataset integrity checks and split-safe loading](https://github.com/tanwirzaman/LangCode_comp/issues/3)** — complete; provides safe data APIs and a validation command.
+2. **[x #2 Reproduce the official BERT-base starter baseline](https://github.com/tanwirzaman/LangCode_comp/issues/2)** — complete; dev metrics are recorded in the baseline report.
 3. **[#6 Evaluate multilingual robustness and tune for Safety Score](https://github.com/tanwirzaman/LangCode_comp/issues/6)** — compare improvements using train/dev only.
 4. **[#1 Confirm the official CodaBench submission schema](https://github.com/tanwirzaman/LangCode_comp/issues/1)** — finish any CodaBench-specific upload details before packaging.
 5. **[#7 Build deterministic inference and validated submission packaging](https://github.com/tanwirzaman/LangCode_comp/issues/7)** — depends on the selected model and confirmed submission contract.
