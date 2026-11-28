@@ -1,6 +1,6 @@
 # LangCode 2027 Shared Task 2: Adversarial Prompt Detection
 
-Project workspace for the LangCode 2027 Shared Task 2. The task is to classify a prompt sent to a code model as safe (`S`) or unsafe (`U`) when it is code-mixed with English or English transliterated into another script. This repository is currently a documented, code-free scaffold: the requirements and workflow are recorded here before implementing a model.
+Project workspace for the LangCode 2027 Shared Task 2. The task is to classify a prompt sent to a code model as safe (`S`) or unsafe (`U`) when it is code-mixed with English or English transliterated into another script. The starter kit is downloaded locally, and split-aware data loading and validation are in place. Model training and inference are the next implementation steps.
 
 ## Problem in plain language
 
@@ -63,6 +63,24 @@ For CodaBench, the scorer reads `/app/input/ref/reference.csv` and `/app/input/r
 
 The notebook targets Python 3 in Google Colab and recommends a T4 GPU. It installs `transformers>=4.48,<5`, `accelerate`, and `datasets`; Colab supplies PyTorch, NumPy, and pandas. The baseline loads `google-bert/bert-base-uncased`, truncates to 256 tokens, trains for two epochs with batch size 32 and learning rate `2e-5`, evaluates on dev each epoch, and uses seed 42. The notebook estimates about 15 minutes on a free T4. It writes `submission.csv` and `submission.zip`, then checks the dev-test archive with the official scorer.
 
+Run the repository's split-aware integrity check from the repository root:
+
+```bash
+python scripts/validate_data.py
+```
+
+Example output with the starter-kit files:
+
+```text
+train: 20,000 rows, S=10,000, U=10,000
+dev: 10,000 rows, S=5,000, U=5,000
+devtest: 10,000 unlabeled prompts
+test: not present (released later by the organizers)
+OK: schemas, contents, row counts, labels, and split IDs are valid.
+```
+
+The command checks the released splits' exact headers and row counts, UTF-8 decoding, non-empty IDs/prompts, label values and balance, duplicate IDs within each split, and ID overlap across splits. It also validates `test.csv` if the organizers release it. It never prints prompt contents. In code, use `load_train()` or `load_dev()` for labeled records. Use `load_predictions("devtest")` or `load_predictions("test")` for label-free prediction records. The prediction loader rejects other split names.
+
 ## Scoring objective
 
 The primary metric is the Safety Score, a clamped form of Youden's J:
@@ -121,20 +139,23 @@ LangCode_comp/
 └── submissions/              # Locally generated CodaBench archives; never commit
 ```
 
-The directories are prepared for the next implementation step. No detector, data, model checkpoint, or unverified submission writer has been added yet.
+Data checking and split-aware loaders are implemented. The starter kit remains local and Git-ignored. No detector, trained checkpoint, or submission writer has been added yet.
 
 ## Local setup status
 
 The tracked repository contains task documentation, project directories, and the explainer deck. The downloaded starter-kit data remains local and ignored by Git. There is no detector code or model checkpoint yet. Python packaging and dependency pins are deliberately deferred until the baseline is implemented. A GPU is optional for data inspection and lightweight experiments; reproducing the BERT-base starter run is expected to benefit from a T4 GPU.
 
-## Planned implementation sequence
+## Recommended GitHub issue sequence
 
-1. Inspect the official starter notebook, CSVs, and scorer; record the exact schema and commands.
-2. Add environment/package configuration and a data-integrity check.
-3. Reproduce the official baseline on train/dev and report the official Safety Score and both recalls.
-4. Add experiment tracking and compare improvements on dev, including error analysis across scripts and safe/unsafe intents where feasible.
-5. Implement deterministic inference and a schema-checked submission archive; validate with the official scorer.
-6. Practice with dev-test during the development phase, then freeze the chosen system before producing test predictions.
+This order is saved to make the dependencies visible:
+
+1. **[#3 Add dataset integrity checks and split-safe loading](https://github.com/tanwirzaman/LangCode_comp/issues/3)** — current work; provides safe data APIs and a validation command.
+2. **[#2 Reproduce the official BERT-base starter baseline](https://github.com/tanwirzaman/LangCode_comp/issues/2)** — depends on #3; establishes dev Safety Score and recalls.
+3. **[#6 Evaluate multilingual robustness and tune for Safety Score](https://github.com/tanwirzaman/LangCode_comp/issues/6)** — compare improvements using train/dev only.
+4. **[#1 Confirm the official CodaBench submission schema](https://github.com/tanwirzaman/LangCode_comp/issues/1)** — finish any CodaBench-specific upload details before packaging.
+5. **[#7 Build deterministic inference and validated submission packaging](https://github.com/tanwirzaman/LangCode_comp/issues/7)** — depends on the selected model and confirmed submission contract.
+6. **[#4 Practice on dev-test and prepare the final test submission](https://github.com/tanwirzaman/LangCode_comp/issues/4)** — follow the competition release dates; test data is scheduled for Jan 8, 2027.
+7. **[#5 Prepare the Shared Task 2 system description paper](https://github.com/tanwirzaman/LangCode_comp/issues/5)** — after test-phase participation and results.
 
 ## Official references
 
