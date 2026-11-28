@@ -43,21 +43,42 @@ The following released files are present locally in `data/raw/` and excluded fro
 
 The downloaded CSVs were read as UTF-8. `train.csv` has columns `id,prompt,label`, 20,000 unique IDs, no empty IDs/prompts/labels, and 10,000 examples per label. `dev.csv` has the same columns, 10,000 unique IDs, no empty IDs/prompts/labels, and 5,000 examples per label. `devtest.csv` has columns `id,prompt`, 10,000 unique IDs, and no empty IDs/prompts. None of the three files contains duplicate IDs or labels outside `S` and `U`.
 
-### Submission and scorer format
+### Verified CodaBench submission contract
 
-`submission.csv` must contain the columns `id` and `label`. A submission can be a CSV, a folder, or a ZIP. A folder or ZIP must contain exactly one file named `submission.csv`. Labels are `S` or `U` (case-insensitive); duplicate or empty IDs are rejected. Extra columns are ignored. Missing predictions count as wrong; unknown IDs are ignored by the scorer.
+This contract is taken from the released starter notebook and the official `scorer/score.py` bundled in the starter kit. The [official data page](https://langcode2027.github.io/task2/data/) identifies that scorer as the program used on CodaBench; the [participation instructions](https://langcode2027.github.io/task2/participate/) say to use its format checker before uploading.
 
-Run these commands from the repository root:
+**Archive.** The starter notebook creates and uploads `submission.zip`. Use this filename as the team's standard. The outer ZIP name is not checked by the scorer, which accepts a ZIP, folder, or CSV. The canonical ZIP contains one top-level `submission.csv`:
 
-```bash
-# Check format and exact coverage for a dev-test submission archive
+```text
+submission.zip
+└── submission.csv
+```
+
+The scorer requires exactly one archive member named `submission.csv` (it locates that basename); the starter notebook writes the CSV at the ZIP root. Keep the root-level layout to match the official example.
+
+**CSV.** Use UTF-8 text with a header and one prediction row per prompt. The official example writes columns in this order:
+
+```csv
+id,label
+T2-483920,U
+T2-105377,S
+```
+
+The required fields are named `id` and `label`. The scorer finds them by header name, so their order is not enforced; it also ignores extra columns. It strips surrounding header/field whitespace, accepts either case for header and labels, and requires labels to be `S` or `U`. IDs must be non-empty and unique. The submission should include exactly the IDs from the phase input, one row per prompt. The scorer does not enforce row order: it matches predictions by ID. Keeping input order is a useful convention, not a scorer requirement. Missing predictions count as wrong; unknown IDs are ignored. A format check with the phase's public CSV reports missing and unknown IDs.
+
+Run the official format checker from the repository root before upload:
+
+```powershell
 python data/raw/scorer/score.py --check submission.zip data/raw/devtest.csv
+```
 
-# Score a local CSV against labeled development data
+Replace `devtest.csv` with the public input CSV for the phase being checked. A complete check reports zero missing and zero unknown IDs and says the file is ready to upload. To score a local prediction CSV against labeled dev data, use:
+
+```powershell
 python data/raw/scorer/score.py --score submission.csv data/raw/dev.csv
 ```
 
-For CodaBench, the scorer reads `/app/input/ref/reference.csv` and `/app/input/res/`, then writes `scores.json` under `/app/output/`.
+For the CodaBench scorer container itself, the official scorer reads `/app/input/ref/reference.csv` and `/app/input/res/`, then writes `scores.json` under `/app/output/`. Those are the scorer's runtime paths; the participant ZIP uses the layout shown above.
 
 ### Starter notebook environment and baseline
 
@@ -167,7 +188,7 @@ This order is saved to make the dependencies visible:
 1. **[x #3 Add dataset integrity checks and split-safe loading](https://github.com/tanwirzaman/LangCode_comp/issues/3)** — complete; provides safe data APIs and a validation command.
 2. **[x #2 Reproduce the official BERT-base starter baseline](https://github.com/tanwirzaman/LangCode_comp/issues/2)** — complete; dev metrics are recorded in the baseline report.
 3. **[x #6 Evaluate multilingual robustness and tune for Safety Score](https://github.com/tanwirzaman/LangCode_comp/issues/6)** — complete; variants, thresholds, seed runs, script slices, and selected candidate are documented.
-4. **[#1 Confirm the official CodaBench submission schema](https://github.com/tanwirzaman/LangCode_comp/issues/1)** — finish any CodaBench-specific upload details before packaging.
+4. **[x #1 Confirm the official CodaBench submission schema](https://github.com/tanwirzaman/LangCode_comp/issues/1)** — complete; the official starter archive, CSV fields, coverage check, and ID semantics are documented above.
 5. **[#7 Build deterministic inference and validated submission packaging](https://github.com/tanwirzaman/LangCode_comp/issues/7)** — depends on the selected model and confirmed submission contract.
 6. **[#4 Practice on dev-test and prepare the final test submission](https://github.com/tanwirzaman/LangCode_comp/issues/4)** — follow the competition release dates; test data is scheduled for Jan 8, 2027.
 7. **[#5 Prepare the Shared Task 2 system description paper](https://github.com/tanwirzaman/LangCode_comp/issues/5)** — after test-phase participation and results.
