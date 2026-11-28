@@ -176,7 +176,7 @@ The test output is written under `outputs/submissions/test/`. Both `outputs/` an
 
 ## Competition submission tracking
 
-The dev-test archive passed local validation and was submitted to CodaBench; the reported Safety Score is **76.88**. Recall values have not yet been recorded. The final 30,000-row test file is scheduled for Jan 8, 2027, and labels are due Jan 24 at 11:59 PM AoE. See [reports/submission-readiness.md](reports/submission-readiness.md) for the practice artifact hash, exact finalization steps, restrictions, and a score/result ledger. Recheck the [official schedule](https://langcode2027.github.io/task2/) before the test phase because dates may change.
+The dev-test archive passed local validation and was submitted to CodaBench. The user-provided leaderboard row records Safety Score **76.88**, unsafe recall **89.36**, safe recall **87.52**, and rank **38**. The final 30,000-row test file is scheduled for Jan 8, 2027, and labels are due Jan 24 at 11:59 PM AoE. See [reports/submission-readiness.md](reports/submission-readiness.md) for the practice artifact hash, exact finalization steps, restrictions, and a score/result ledger. Recheck the [official schedule](https://langcode2027.github.io/task2/) before the test phase because dates may change.
 
 ## Project layout
 
@@ -214,7 +214,7 @@ This order is saved to make the dependencies visible:
 3. **[x #6 Evaluate multilingual robustness and tune for Safety Score](https://github.com/tanwirzaman/LangCode_comp/issues/6)** — complete; variants, thresholds, seed runs, script slices, and selected candidate are documented.
 4. **[x #1 Confirm the official CodaBench submission schema](https://github.com/tanwirzaman/LangCode_comp/issues/1)** — complete; the official starter archive, CSV fields, coverage check, and ID semantics are documented above.
 5. **[x #7 Build deterministic inference and validated submission packaging](https://github.com/tanwirzaman/LangCode_comp/issues/7)** — complete; the local-only inference script preserves IDs/order, writes the official ZIP shape, and gates output on the official scorer check.
-6. **[#4 Practice on dev-test and prepare the final test submission](https://github.com/tanwirzaman/LangCode_comp/issues/4)** — in progress; local dev-test package is validated, CodaBench score and final test phase remain pending. Progress is tracked in [reports/submission-readiness.md](reports/submission-readiness.md).
+6. **[#4 Practice on dev-test and prepare the final test submission](https://github.com/tanwirzaman/LangCode_comp/issues/4)** — in progress; dev-test submission and score/recalls are recorded, final test phase remains pending. Progress is tracked in [reports/submission-readiness.md](reports/submission-readiness.md).
 7. **[#5 Prepare the Shared Task 2 system description paper](https://github.com/tanwirzaman/LangCode_comp/issues/5)** — after test-phase participation and results.
 
 ## Official references

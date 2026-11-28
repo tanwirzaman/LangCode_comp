@@ -9,7 +9,7 @@ This file tracks the development practice submission and final-test handoff for 
 - **Model selection boundary:** fitting and threshold selection used train/dev only. The experiment report states that no dev-test/test rows were loaded for tuning. Dev-test is used here only for the competition's practice submission.
 - **Practice artifact:** `outputs/submissions/devtest/submission.zip` (local and Git-ignored); CSV SHA-256 `6162ab2ad52948bdcbbc7a3cd498bd5d4980c241d279185d688f3611bdaad56d`.
 - **Local official format/coverage check:** 10,000 predictions; 0 missing IDs; 0 unknown IDs; scorer said “The file is ready to upload.” Two local inference runs produced byte-identical CSV files and the source row order was verified.
-- **CodaBench practice result:** Safety Score **76.88**, reported by the user after submission. The dev-test archive has been submitted. CodaBench's unsafe and safe recall values, plus the exact submission date/time, have not yet been provided.
+- **CodaBench practice result:** Safety Score **76.88**; unsafe recall (`R_U`) **89.36**; safe recall (`R_S`) **87.52**. The user-provided leaderboard row lists rank **38**, participant `tanwirzaman`, submission ID `1073005`, team `TeamNPLabs`, affiliation `NPLabs`, and timestamp `2026-11-28 13:26` as displayed by CodaBench (timezone not specified).
 
 ## Final test phase handoff
 
@@ -27,7 +27,7 @@ Follow the official data restriction: label the held-out prompts with the system
 
 ## Submission result ledger
 
-| Phase | Submission date/time (AoE) | Model/config version | Artifact SHA-256 | Safety Score | Unsafe recall | Safe recall | CodaBench status/result |
+| Phase | Submission date/time (as displayed) | Model/config version | Artifact SHA-256 | Safety Score | R_U | R_S | CodaBench status/result |
 |---|---|---|---|---:|---:|---:|---|
-| Dev-test | Not provided | XLM-R base seed 43, threshold 0.52 | `6162ab2ad52948bdcbbc7a3cd498bd5d4980c241d279185d688f3611bdaad56d` (CSV) | 76.88 | Pending | Pending | Submitted; score reported by user; recall values not provided |
+| Dev-test | 2026-11-28 13:26 (timezone unspecified) | XLM-R base seed 43, threshold 0.52 | `6162ab2ad52948bdcbbc7a3cd498bd5d4980c241d279185d688f3611bdaad56d` (CSV) | 76.88 | 89.36 | 87.52 | Rank 38; submission ID 1073005; TeamNPLabs (NPLabs); user-provided leaderboard record |
 | Test | Pending release | Pending | Pending | Pending | Pending | Pending | Pending |
